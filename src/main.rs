@@ -82,11 +82,12 @@ fn deadfish_interpreter() -> Result<(String, Vec<u8>), DeadfishError> {
         let mut df = Deadfish::new(&args[1])?;
         df.execute();
 
+        let output = match String::from_utf8(df.output.clone()) {
+            Ok(string) => string,
+            Err(_) => df.output.clone().iter().map(|o| *o as char).collect(),
+        };
         // Return the output as a tuple of String and Vec<u8>
-        return Ok((
-            df.output.iter().map(|o| *o as char).collect(),
-            df.output.clone(),
-        ));
+        return Ok((output, df.output));
     }
 
     // Return an error if the number of arguments is incorrect
