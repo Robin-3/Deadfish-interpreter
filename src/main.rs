@@ -7,6 +7,8 @@ enum DeadfishError {
     SintaxisError(String),
     #[error("Character instruction unknown: '{0}'")]
     InstruccionUnknown(char),
+    #[error("Execution Error: Tokens not loaded")]
+    TokensUnknown,
 }
 
 // Enum to represent the Deadfish language commands
@@ -21,43 +23,44 @@ enum Command {
 struct Deadfish {
     value: u8,
     output: Vec<u8>,
-    tokens: Vec<Command>,
+    tokens: Option<Vec<Command>>,
 }
 
 impl Deadfish {
     // Constructor to create a new Deadfish interpreter instance
-    fn new(code: &str) -> Result<Deadfish, DeadfishError> {
-        // Generate tokens from the Deadfish code
-        let tokens = Deadfish::tokens(code.into())?;
-
+    fn new() -> Self {
         // Return a new Deadfish instance
-        Ok(Deadfish {
+        Deadfish {
             value: 0,
             output: Vec::new(),
-            tokens,
-        })
-    }
-
-    // Execute the Deadfish code
-    fn execute(&mut self) {
-        for token in self.tokens.iter() {
-            let mut val = self.value as u16;
-
-            // Match each command and perform the corresponding operation
-            match token {
-                Command::Increase => val += 1,
-                Command::Decrease => val += u8::MAX as u16,
-                Command::Square => val *= val,
-                Command::Output => self.output.push(self.value),
-            }
-            self.value = val as u8
+            tokens: None,
         }
     }
 
+    // Execute the Deadfish code
+    fn execute(&mut self) -> Result<&mut Self, DeadfishError> {
+        match self.tokens.as_mut() {
+            Some(tokens) => {
+                while let Some(token) = tokens.pop() {
+                    // Match each command and perform the corresponding operation
+                    match token {
+                        Command::Increase => self.value = self.value.wrapping_add(1),
+                        Command::Decrease => self.value = self.value.wrapping_sub(1),
+                        Command::Square => self.value = self.value.wrapping_pow(2),
+                        Command::Output => self.output.push(self.value),
+                    }
+                }
+            }
+            None => return Err(DeadfishError::TokensUnknown),
+        }
+
+        Ok(self)
+    }
+
     // Generate tokens from Deadfish code
-    fn tokens(code: String) -> Result<Vec<Command>, DeadfishError> {
+    fn tokens(&mut self, code: String) -> Result<&mut Self, DeadfishError> {
         let mut tokens: Vec<Command> = Vec::new();
-        for c in code.chars() {
+        for c in code.chars().rev() {
             // Match each character to its corresponding Deadfish command
             match c {
                 'i' => tokens.push(Command::Increase),
@@ -68,8 +71,9 @@ impl Deadfish {
             }
         }
 
-        // Return the generated tokens
-        Ok(tokens)
+        // Save the generated tokens
+        self.tokens = Some(tokens);
+        Ok(self)
     }
 }
 
@@ -79,8 +83,8 @@ fn deadfish_interpreter() -> Result<(String, Vec<u8>), DeadfishError> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 2 {
         // Create a new Deadfish instance and execute the code
-        let mut df = Deadfish::new(&args[1])?;
-        df.execute();
+        let mut df = Deadfish::new();
+        df.tokens(args[1].clone())?.execute()?;
 
         let output = String::from_utf8_lossy(df.output.as_slice()).to_string();
         // Return the output as a tuple of String and Vec<u8>
