@@ -26,14 +26,24 @@ struct Deadfish {
     tokens: Option<Vec<Command>>,
 }
 
-impl Deadfish {
-    // Constructor to create a new Deadfish interpreter instance
-    fn new() -> Self {
-        // Return a new Deadfish instance
+impl Default for Deadfish {
+    fn default() -> Self {
         Deadfish {
             value: 0,
             output: Vec::new(),
             tokens: None,
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl Deadfish {
+    // Constructor to create a new Deadfish interpreter instance
+    fn new(value: u8, output: Vec<u8>, tokens: Option<Vec<Command>>) -> Self {
+        Deadfish {
+            value,
+            output,
+            tokens,
         }
     }
 
@@ -83,7 +93,7 @@ fn deadfish_interpreter() -> Result<(String, Vec<u8>), DeadfishError> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 2 {
         // Create a new Deadfish instance and execute the code
-        let mut df = Deadfish::new();
+        let mut df = Deadfish::default();
         df.tokens(args[1].clone())?.execute()?;
 
         let output = String::from_utf8_lossy(df.output.as_slice()).to_string();
