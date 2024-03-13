@@ -4,7 +4,6 @@ use std::cell::OnceCell;
 // Struct to represent the Deadfish interpreter
 #[derive(Default)]
 pub struct Interpreter {
-    value: OnceCell<u8>,
     output: OnceCell<Vec<u8>>,
     tokens: OnceCell<Vec<Command>>,
 }
@@ -15,16 +14,20 @@ impl Interpreter {
         Self::default()
     }
 
-    fn set_tokens(&self, tokens: Vec<Command>) -> Result<&Self, InterpreterError> {
+    fn set_tokens(&self, tokens: Vec<Command>) -> Result<(), InterpreterError> {
         self.tokens
             .set(tokens)
-            .map_err(|_| InterpreterError::DataOverwritten("Tokens".to_string()))?;
+            .map_err(|_| InterpreterError::TokensOverwritten)?;
 
-        Ok(self)
+        Ok(())
     }
 
     // Execute the Deadfish code
-    fn run_code(&self) -> Result<&Self, InterpreterError> {
+    fn run_code(&self) -> Result<(), InterpreterError> {
+        if self.output.get().is_some() {
+            return Ok(());
+        }
+
         match self.tokens.get() {
             Some(tokens) => {
                 let mut value = 0u8;
@@ -43,19 +46,17 @@ impl Interpreter {
 
                 self.output
                     .set(output)
-                    .map_err(|_| InterpreterError::DataOverwritten("Output".to_string()))?;
-                self.value
-                    .set(value)
-                    .map_err(|_| InterpreterError::DataOverwritten("Value".to_string()))?;
+                    .map_err(|_| InterpreterError::OutputOverwritten)?;
             }
             None => return Err(InterpreterError::TokensUnknown),
         }
 
-        Ok(self)
+        Ok(())
     }
 
-    pub fn execute(&self, tokens: Vec<Command>) -> Result<&Self, InterpreterError> {
-        self.set_tokens(tokens)?.run_code()
+    pub fn execute(&self, tokens: Vec<Command>) -> Result<(), InterpreterError> {
+        self.set_tokens(tokens)?;
+        self.run_code()
     }
 
     pub fn get_output_as_vec(&self) -> Result<Vec<u8>, InterpreterError> {
