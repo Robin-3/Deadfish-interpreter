@@ -1,6 +1,6 @@
 use command::Command;
 use error::InterpreterError;
-use interpreter::Interpreter;
+use interpreter::{Data, Interpreter};
 
 mod command;
 mod error;
@@ -9,7 +9,7 @@ mod interpreter;
 const USAGE: &str = "./deadfish <df_code> \n\nDeadfish interpreter.\n\nArguments:\n  <df_code>        Deadfish code to be executed. Use only the following 4 instructions: idso";
 
 // Function to interpret Deadfish code from command line arguments
-pub fn deadfish_interpreter() -> Result<(String, Vec<u8>), InterpreterError> {
+pub fn deadfish_interpreter() -> Result<(String, Data), InterpreterError> {
     // Get command line arguments
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 2 {

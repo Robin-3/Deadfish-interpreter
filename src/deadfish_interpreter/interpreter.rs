@@ -1,11 +1,16 @@
-use super::{command::Command, error::InterpreterError};
+use super::{
+    command::{Command, Commands},
+    error::InterpreterError,
+};
 use std::cell::OnceCell;
+
+pub type Data = Vec<u8>;
 
 // Struct to represent the Deadfish interpreter
 #[derive(Default)]
 pub struct Interpreter {
-    output: OnceCell<Vec<u8>>,
-    tokens: OnceCell<Vec<Command>>,
+    output: OnceCell<Data>,
+    tokens: OnceCell<Commands>,
 }
 
 impl Interpreter {
@@ -14,7 +19,7 @@ impl Interpreter {
         Self::default()
     }
 
-    fn set_tokens(&self, tokens: Vec<Command>) -> Result<(), InterpreterError> {
+    fn set_tokens(&self, tokens: Commands) -> Result<(), InterpreterError> {
         self.tokens
             .set(tokens)
             .map_err(|_| InterpreterError::TokensOverwritten)?;
@@ -31,7 +36,7 @@ impl Interpreter {
         match self.tokens.get() {
             Some(tokens) => {
                 let mut value = 0u8;
-                let mut output: Vec<u8> = Vec::new();
+                let mut output: Data = Vec::new();
                 let mut tokens = tokens.clone();
 
                 while let Some(token) = tokens.pop() {
@@ -54,12 +59,12 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn execute(&self, tokens: Vec<Command>) -> Result<(), InterpreterError> {
+    pub fn execute(&self, tokens: Commands) -> Result<(), InterpreterError> {
         self.set_tokens(tokens)?;
         self.run_code()
     }
 
-    pub fn get_output_as_vec(&self) -> Result<Vec<u8>, InterpreterError> {
+    pub fn get_output_as_vec(&self) -> Result<Data, InterpreterError> {
         match self.output.get() {
             Some(output) => Ok(output.clone()),
             None => Err(InterpreterError::OutputUnknown),

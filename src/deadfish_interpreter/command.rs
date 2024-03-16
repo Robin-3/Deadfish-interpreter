@@ -1,5 +1,7 @@
 use super::error::InterpreterError;
 
+pub type Commands = Vec<Command>;
+
 // Enum to represent the Deadfish language commands
 #[derive(Clone)]
 pub enum Command {
@@ -11,8 +13,8 @@ pub enum Command {
 
 impl Command {
     // Generate tokens from Deadfish code
-    pub fn code_to_tokens(code: String) -> Result<Vec<Self>, InterpreterError> {
-        let mut tokens: Vec<Command> = Vec::new();
+    pub fn code_to_tokens(code: String) -> Result<Commands, InterpreterError> {
+        let mut tokens: Commands = Vec::new();
         for c in code.chars().rev() {
             // Match each character to its corresponding Deadfish command
             match c {
