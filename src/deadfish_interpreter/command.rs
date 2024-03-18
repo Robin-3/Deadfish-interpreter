@@ -14,7 +14,7 @@ pub enum Command {
 impl Command {
     // Generate tokens from Deadfish code
     pub fn code_to_tokens(code: String) -> Result<Commands, InterpreterError> {
-        let mut tokens: Commands = Vec::new();
+        let mut tokens: Commands = Vec::with_capacity(code.len());
         for c in code.chars().rev() {
             // Match each character to its corresponding Deadfish command
             match c {
@@ -28,5 +28,14 @@ impl Command {
 
         // Return the generated tokens
         Ok(tokens)
+    }
+
+    pub fn output_counter(commands: &Commands) -> usize {
+        let mut counter = 0usize;
+        for c in commands.iter() {
+            if let Self::Output = c { counter += 1 }
+        }
+        
+        counter
     }
 }

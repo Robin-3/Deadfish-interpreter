@@ -36,7 +36,7 @@ impl Interpreter {
         match self.tokens.get() {
             Some(tokens) => {
                 let mut value = 0u8;
-                let mut output: Data = Vec::new();
+                let mut output: Data = Vec::with_capacity(Command::output_counter(tokens));
                 let mut tokens = tokens.clone();
 
                 while let Some(token) = tokens.pop() {
